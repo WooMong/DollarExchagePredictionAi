@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exchange Rate Visualization</title>
+    <!-- Plotly.js를 로드하기 위한 CDN 링크 -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <!-- 그래프를 나타낼 div -->
+    <div id="exchangeRateGraph"></div>
+
+    <!-- 기간 선택 옵션 태그 -->
+    <label for="periodSelect">Select Period:</label>
+    <select id="periodSelect" onchange="updateGraph()">
+        <option value="1mo">1 Month</option>
+        <option value="6mo">6 Months</option>
+        <option value="1y">1 Year</option>
+        <option value="5y">5 Years</option>
+        <option value="10y" selected>10 Years</option> <!-- 기본 선택값 -->
+    </select>
+    <script>
+        // 파이썬에서 생성된 CSV 파일의 그래프를 불러와서 표시하는 함수
+        function displayGraph(period) {
+            var csvFile = `exchange_rate_data_${period}.csv`; // 기간에 따라 다른 파일명 설정
+
+            Plotly.d3.csv(csvFile, function(err, rows){
+                function unpack(rows, key) {
+                    return rows.map(function(row) { return row[key]; });
+                }
+
+                var dates = unpack(rows, 'Date');
+                var rates = unpack(rows, 'Close');
+                var data = [{
+                    type: 'scatter',
+                    mode: 'lines',
+                    x: dates,
+                    y: rates,
+                    name: 'USD/EUR'
+                }];
+
+                var layout = {
+                    title: `USD/EUR Exchange Rate over the Last ${period}`,
+                    xaxis: { title: 'Date' },
+                    yaxis: { title: 'Exchange Rate' }
+                };
+
+                Plotly.newPlot('exchangeRateGraph', data, layout);
+            });
+        }
+        // 페이지 로드 시 기본 그래프 표시
+        displayGraph('10y'); // 기본값 10년 데이터 표시
+
+        // 옵션 선택 변경 시 호출되는 함수
+        function updateGraph() {
+            var period = document.getElementById('periodSelect').value;
+            displayGraph(period); // 선택된 기간에 따라 그래프 업데이트
+        }
+    </script>
+<script>
+    // CSV 파일을 로드하여 그래프로 표시하는 함수
+    function plotExchangeRate() {
+        Plotly.d3.csv('predicted_exchange_rate.csv', function(data) {
+            var dates = data.map(row => row.Date);
+            var forecast = data.map(row => row.Forecast);
+            var trace = {
+                x: dates,
+                y: forecast,
+                mode: 'lines',
+                line: {color: 'red'},
+                name: '예측 환율'
+            };
+
+            var layout = {
+                title: '환율 예측 (3개월, SARIMA)',
+                xaxis: {title: 'Date'},
+                yaxis: {title: '환율', range: [0.8, 1.05]},  // 세로 범위 설정
+                margin: {l: 50, r: 50, b: 50, t: 50}
+            };
+            Plotly.newPlot('plot', [trace], layout);
+        });
+    }
+    // 페이지 로드 시 그래프 표시
+    plotExchangeRate();
+</script>   
+</body>
+</html>
+
+
+
+
+
+
